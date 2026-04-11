@@ -2,1050 +2,1218 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Brick Wall Defense - Mobile</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>OCTO ALIEN - Retro Arcade</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap');
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
         }
-
         body {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            background: #000;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             min-height: 100vh;
-            font-family: 'Courier New', monospace;
-            color: #fff;
+            font-family: 'VT323', monospace;
             overflow: hidden;
             touch-action: none;
         }
-
         #gameContainer {
             position: relative;
-            max-width: 100vw;
-            max-height: 100vh;
         }
-
-        #gameCanvas {
-            border: 2px solid #0ff;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-            background: linear-gradient(180deg, #001122 0%, #003344 100%);
+        canvas {
+            border: 3px solid #0ff;
+            box-shadow: 0 0 30px rgba(0,255,255,0.4), 0 0 60px rgba(0,255,255,0.15), inset 0 0 30px rgba(0,0,0,0.5);
             display: block;
-            touch-action: none;
         }
-
-        .hud {
+        .overlay {
             position: absolute;
-            top: 40svh;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 16px;
-            color: #0ff;
-            text-align: center;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 8px 16px;
-            border-radius: 8px;
-            z-index: 10;
-            pointer-events: none;
-        }
-
-        #lives{
-            color: firebrick;
-        }
-
-        .controls {
-            position: absolute;
-            bottom: 20px;
-
-            left: 20%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 20px;
-            z-index: 10;
-        }
-
-        .bomb-button {
-            width: 75px;
-            height: 75px;
-            background: linear-gradient(135deg, #f0f, #a0a);
-            border: 3px solid #fff;
-            border-radius: 50%;
-            color: #fff;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(255, 0, 255, 0.5);
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.92);
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
-            transition: all 0.2s;
-            touch-action: manipulation;
+            align-items: center;
+            color: white;
         }
+        .hidden { display: none !important; }
 
-        .bomb-button:active {
-            transform: scale(0.95);
-            box-shadow: 0 2px 10px rgba(255, 0, 255, 0.7);
+        .menu-title {
+            font-family: 'VT323', monospace;
+            font-size: 4.5rem;
+            letter-spacing: 6px;
+            text-shadow: 0 0 30px currentColor, 0 0 60px currentColor;
+            animation: pulse 2s ease-in-out infinite;
+            margin-bottom: 0.3rem;
         }
-
-        .bomb-button.charging {
-            animation: pulse 0.5s infinite;
-            background: linear-gradient(135deg, #ff0, #f80);
+        .menu-sub {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 4px;
+            color: #888;
+            margin-bottom: 2.5rem;
+            text-transform: uppercase;
         }
-
-        .bomb-button.ready {
-            background: linear-gradient(135deg, #0f0, #0a0);
-            animation: glow 1s infinite;
-        }
-
-        .bomb-button.active {
-            background: linear-gradient(135deg, #f00, #800);
-            animation: urgent 0.3s infinite;
-        }
-
         @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        @keyframes flicker {
+            0%,19%,21%,23%,25%,54%,56%,100% { opacity: 1; }
+            20%,24%,55% { opacity: 0.4; }
         }
 
-        @keyframes glow {
-            0%, 100% { box-shadow: 0 4px 15px rgba(0, 255, 0, 0.5); }
-            50% { box-shadow: 0 4px 25px rgba(0, 255, 0, 0.9); }
+        .octo-preview {
+            margin: 1rem 0 1.5rem;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
         }
 
-        @keyframes urgent {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        .charge-progress {
-            position: absolute;
-            width: 80%;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 3px;
-            bottom: 10px;
+        button {
+            padding: 0.9rem 2.5rem;
+            font-size: 1.4rem;
+            font-family: 'VT323', monospace;
+            letter-spacing: 3px;
+            border: 2px solid currentColor;
+            border-radius: 0;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: transparent;
+            position: relative;
             overflow: hidden;
         }
-
-        .charge-bar {
-            height: 100%;
-            background: #ff0;
-            width: 0%;
-            transition: width 0.05s linear;
-        }
-
-        .instructions {
+        button::before {
+            content: '';
             position: absolute;
-            top: 60px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 12px;
-            opacity: 0.8;
+            inset: 0;
+            background: currentColor;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        button:hover::before { opacity: 0.15; }
+        button:active { transform: scale(0.96); }
+
+        .menu-btn { color: #0ff; }
+        .victory-btn { color: #0f0; }
+        .gameover-btn { color: #f0f; }
+
+        .controls-info {
+            margin-top: 2rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
             text-align: center;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 8px 12px;
-            border-radius: 6px;
-            max-width: 90%;
-            pointer-events: none;
+            color: #555;
+            letter-spacing: 2px;
+            line-height: 2;
+        }
+        .controls-info span { color: #0ff; }
+
+        .result-score {
+            font-family: 'VT323', monospace;
+            font-size: 2rem;
+            margin: 1rem 0 2rem;
+            letter-spacing: 4px;
+        }
+        .result-score .val {
+            font-size: 3rem;
+            display: block;
         }
 
-        .game-over {
+        /* Scanline overlay on top of canvas */
+        #scanlines {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.95);
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            border: 2px solid #ff0044;
-            box-shadow: 0 0 30px rgba(255, 0, 68, 0.7);
-            display: none;
-            z-index: 20;
-        }
-
-        .restart-btn {
-            background: #0ff;
-            color: #000;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 18px;
-            margin-top: 15px;
-            font-weight: bold;
-            touch-action: manipulation;
-        }
-
-        .restart-btn:active {
-            transform: scale(0.95);
-        }
-
-        .touch-indicator {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            border: 2px solid rgba(0, 255, 255, 0.6);
-            border-radius: 50%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             pointer-events: none;
-            animation: ripple 0.6s ease-out;
+            background: repeating-linear-gradient(
+                to bottom,
+                transparent 0px,
+                transparent 3px,
+                rgba(0,0,0,0.08) 3px,
+                rgba(0,0,0,0.08) 4px
+            );
             z-index: 5;
         }
 
-        @keyframes ripple {
-            0% {
-                transform: scale(0.5);
-                opacity: 1;
-            }
-            100% {
-                transform: scale(2);
-                opacity: 0;
-            }
+        /* CRT vignette */
+        #vignette {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.6) 100%);
+            z-index: 6;
         }
     </style>
 </head>
 <body>
 <div id="gameContainer">
-    <div class="hud">
-        Score: <span id="score">0</span> | Lives: <span id="lives">3</span> | Boss: <span id="mothershipHealth">500</span>/500
-    </div>
-    <div class="instructions" id="instructions">
-        Touch & drag to move + auto-fire • Use BOMB button below
-    </div>
-    <canvas id="gameCanvas"></canvas>
+    <canvas id="gameCanvas" width="400" height="700"></canvas>
+    <div id="scanlines"></div>
+    <div id="vignette"></div>
 
-    <div class="controls">
-        <button class="bomb-button" id="bombButton">
-            <span id="bombLabel">CHARGE<br>BOMB</span>
-            <div class="charge-progress">
-                <div class="charge-bar" id="chargeBar"></div>
-            </div>
-        </button>
+    <!-- MENU -->
+    <div id="menuScreen" class="overlay">
+        <div class="octo-preview">
+            <svg width="120" height="80" viewBox="0 0 120 80">
+                <!-- Octo body -->
+                <rect x="20" y="10" width="80" height="30" fill="#f0f" rx="4"/>
+                <!-- Eyes -->
+                <rect x="28" y="17" width="20" height="10" fill="#fff" rx="2"/>
+                <rect x="72" y="17" width="20" height="10" fill="#fff" rx="2"/>
+                <rect x="33" y="19" width="10" height="6" fill="#000" rx="1"/>
+                <rect x="77" y="19" width="10" height="6" fill="#000" rx="1"/>
+                <!-- Tentacles animated via CSS -->
+                <g id="tentacles">
+                    <rect class="tent" x="26" y="40" width="8" height="20" fill="#f0f" rx="3"/>
+                    <rect class="tent" x="38" y="40" width="8" height="22" fill="#f0f" rx="3"/>
+                    <rect class="tent" x="50" y="40" width="8" height="18" fill="#f0f" rx="3"/>
+                    <rect class="tent" x="62" y="40" width="8" height="24" fill="#f0f" rx="3"/>
+                    <rect class="tent" x="74" y="40" width="8" height="20" fill="#f0f" rx="3"/>
+                    <rect class="tent" x="86" y="40" width="8" height="22" fill="#f0f" rx="3"/>
+                </g>
+                <!-- Glow -->
+                <ellipse cx="60" cy="25" rx="50" ry="22" fill="none" stroke="#f0f" stroke-width="1" opacity="0.3"/>
+            </svg>
+        </div>
+        <h1 class="menu-title" style="color:#f0f">OCTO ALIEN</h1>
+        <p class="menu-sub">A retro arcade shooter</p>
+        <button class="menu-btn" onclick="startGame()">▶ PLAY</button>
+        <div class="controls-info">
+            <span>MOBILE</span> — TAP TO MOVE · HOLD CHARGE TO BUILD POWER<br>
+            <span>PC</span> — A/D OR ARROW KEYS · SPACE TO CHARGE
+        </div>
     </div>
 
-    <div id="gameOver" class="game-over">
-        <h2>Game Over!</h2>
-        <p>Final Score: <span id="finalScore">0</span></p>
-        <button class="restart-btn" onclick="restartGame()">Play Again</button>
+    <!-- VICTORY -->
+    <div id="victoryScreen" class="overlay hidden">
+        <h1 class="menu-title" style="color:#0ff; animation: flicker 3s infinite;">VICTORY!</h1>
+        <div class="result-score" style="color:#f0f">
+            FINAL SCORE
+            <span class="val" id="victoryScore">0</span>
+        </div>
+        <button class="victory-btn" onclick="startGame()">▶ PLAY AGAIN</button>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="gameOverScreen" class="overlay hidden">
+        <h1 class="menu-title" style="color:#f00; animation: flicker 1.5s infinite;">GAME OVER</h1>
+        <div class="result-score" style="color:#0ff">
+            SCORE
+            <span class="val" id="gameOverScore">0</span>
+        </div>
+        <button class="gameover-btn" onclick="startGame()">↺ TRY AGAIN</button>
     </div>
 </div>
 
 <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const bombButton = document.getElementById('bombButton');
-    const bombLabel = document.getElementById('bombLabel');
-    const chargeBar = document.getElementById('chargeBar');
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let audioCtx;
+let gameState = 'MENU';
+let game = {};
+let keys = {};
+let touchX = null;
+let chargeTouch = false;
+let animationId;
+let lastTime = 0;
 
-    // Responsive canvas sizing
-    function resizeCanvas() {
-        const maxWidth = Math.min(window.innerWidth - 20, 800);
-        const maxHeight = window.innerHeight - 200;
-        const aspectRatio = 4 / 3;
-
-        if (maxWidth / maxHeight > aspectRatio) {
-            canvas.height = maxHeight;
-            canvas.width = maxHeight * aspectRatio;
-        } else {
-            canvas.width = maxWidth;
-            canvas.height = maxWidth / aspectRatio;
-        }
-    }
-
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    // Audio
-    let audioCtx;
-    try {
+// ── AUDIO ──────────────────────────────────────────────────────────────────
+function initAudio() {
+    if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    } catch(e) {
-        audioCtx = null;
+    }
+}
+
+function sound(type) {
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+
+    function mkOsc(freq, type2, gain, dur, freqEnd) {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.connect(g);
+        g.connect(audioCtx.destination);
+        osc.type = type2 || 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        if (freqEnd) osc.frequency.exponentialRampToValueAtTime(freqEnd, now + dur);
+        g.gain.setValueAtTime(gain, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+        osc.start(now);
+        osc.stop(now + dur);
     }
 
-    function playSound(freq, duration, type = 'sine', volume = 0.1) {
-        if (!audioCtx) return;
-        try {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-            osc.start();
-            osc.stop(audioCtx.currentTime + duration);
-        } catch(e) {}
+    switch(type) {
+        case 'shoot':   mkOsc(520, 'square', 0.07, 0.07, 260); break;
+        case 'hit':     mkOsc(380, 'sine', 0.12, 0.1, 200); break;
+        case 'damage':  mkOsc(300, 'sawtooth', 0.18, 0.25, 80); break;
+        case 'charge':  mkOsc(200, 'sine', 0.05, 0.12, 400); break;
+        case 'detonate':
+            mkOsc(60, 'sawtooth', 0.3, 0.5);
+            mkOsc(120, 'square', 0.15, 0.3);
+            break;
+        case 'phase':
+            [180, 240, 300, 360].forEach((f, i) => {
+                setTimeout(() => mkOsc(f, 'sine', 0.1, 0.3), i * 80);
+            });
+            break;
+        case 'victory':
+            [260, 330, 390, 520, 650].forEach((f, i) => {
+                setTimeout(() => mkOsc(f, 'sine', 0.12, 0.3), i * 100);
+            });
+            break;
+        case 'octoHit':
+            mkOsc(440, 'sawtooth', 0.1, 0.15, 220);
+            mkOsc(660, 'sine', 0.06, 0.1);
+            break;
     }
+}
 
-    // Game state
-    let gameRunning = true;
-    let score = 0;
-    let lives = 3;
-    let mothershipHealth = 500;
-    let lastBulletTime = 0;
-    let autoFireRate = 333;
-    let blastZones = [];
+// ── PARTICLES ──────────────────────────────────────────────────────────────
+function spawnParticles(x, y, n, col, spd, life) {
+    for (let i = 0; i < n; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const s = spd * (0.5 + Math.random() * 0.5);
+        game.particles.push({
+            x, y,
+            vx: Math.cos(a) * s,
+            vy: Math.sin(a) * s,
+            life, max: life,
+            col: col || '#ffff00'
+        });
+    }
+}
 
-    // Touch/bomb state
-    let isTouching = false;
-    let touchX = 0;
-    let bombState = 'idle'; // idle, charging, ready, active
-    let bombChargeStart = 0;
-    let explosiveInFlight = null;
-
-    // Game objects (scaled for mobile)
-    const scale = canvas.width / 800;
-    const player = {
-        x: canvas.width / 2 - 30 * scale,
-        y: canvas.height - 80 * scale,
-        width: 60 * scale,
-        height: 50 * scale,
-        speed: 6 * scale,
-        targetX: canvas.width / 2 - 30 * scale
+// ── INIT ───────────────────────────────────────────────────────────────────
+function initGame() {
+    game = {
+        octo: {
+            x: 200, y: 55, w: 80,
+            health: 100, maxHealth: 100,
+            phase: 1, dir: 1,
+            bombT: 0, moveT: 0,
+            armour: 0, // flash timer when hit
+        },
+        player: {
+            x: 200, y: 630, w: 30,
+            health: 100, lives: 3,
+            vx: 0, respawn: 0,
+            iframes: 0, // invincibility frames
+            trail: [],
+        },
+        bricks: [],
+        bombers: [],
+        pBullets: [],
+        eBullets: [],
+        oBombs: [],
+        charge: {
+            state: 'IDLE', // IDLE | CHARGING | LAUNCHED | DETONATING
+            time: 0,
+            x: 0, y: 0,
+            cd: 0, // cooldown
+            zones: [],
+            maxCd: 3,
+        },
+        score: 0,
+        t: 0,
+        brickT: 0,
+        bomberT: 0,
+        shootT: 0,
+        particles: [],
+        shake: 0,
+        shakeX: 0, shakeY: 0,
+        showCtrl: true,
+        ctrlT: 0,
+        bgStars: Array.from({length: 70}, (_, i) => ({
+            x: Math.random() * 400,
+            y: Math.random() * 700,
+            s: Math.random() * 2 + 0.5,
+            spd: Math.random() * 0.4 + 0.1,
+            bright: Math.random()
+        })),
+        flash: 0,   // whole-screen flash on detonate
+        combo: 0,
+        comboT: 0,
     };
+}
 
-    const mothership = {
-        x: canvas.width / 2 - 140 * scale,
-        y: 15 * scale,
-        width: 280 * scale,
-        height: 60 * scale,
-        tentacleOffset: 0,
-        baseX: canvas.width / 2 - 140 * scale,
-        direction: 1,
-        speed: 2 * scale,
-        lastBombDrop: Date.now(),
-        bombDropInterval: 2000,
-        isEnraged: false
-    };
+function startGame() {
+    initAudio();
+    initGame();
+    gameState = 'PLAYING';
+    document.getElementById('menuScreen').classList.add('hidden');
+    document.getElementById('victoryScreen').classList.add('hidden');
+    document.getElementById('gameOverScreen').classList.add('hidden');
+    lastTime = performance.now();
+    if (animationId) cancelAnimationFrame(animationId);
+    animationId = requestAnimationFrame(gameLoop);
+}
 
-    let bullets = [];
-    let explosives = [];
-    let particles = [];
-    let brickEnemies = [];
-    let bomberEnemies = [];
-    let bombs = [];
+function showVictory() {
+    gameState = 'VICTORY';
+    document.getElementById('victoryScore').textContent = game.score;
+    document.getElementById('victoryScreen').classList.remove('hidden');
+    sound('victory');
+}
 
-    let brickSpawnTimer = 0;
-    let bomberSpawnTimer = 0;
+function showGameOver() {
+    gameState = 'GAME_OVER';
+    document.getElementById('gameOverScore').textContent = game.score;
+    document.getElementById('gameOverScreen').classList.remove('hidden');
+}
 
-    // Touch controls
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+// ── INPUT ──────────────────────────────────────────────────────────────────
+window.addEventListener('keydown', e => {
+    keys[e.key] = true;
+    if (e.key === ' ') e.preventDefault();
+});
+window.addEventListener('keyup', e => {
+    keys[e.key] = false;
+    // Space release fires charge
+    if (e.key === ' ' && game.charge && game.charge.state === 'CHARGING') {
+        releaseCharge();
+    }
+});
 
-    // Desktop fallback
-    let keys = {};
-    document.addEventListener('keydown', (e) => {
-        keys[e.code] = true;
-    });
-    document.addEventListener('keyup', (e) => {
-        keys[e.code] = false;
-    });
+canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = 400 / rect.width;
+    const scaleY = 700 / rect.height;
 
-    function handleTouchStart(e) {
-        e.preventDefault();
-        const touch = e.touches[0];
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        const x = (e.changedTouches[i].clientX - rect.left) * scaleX;
+        const y = (e.changedTouches[i].clientY - rect.top) * scaleY;
+
+        if (x >= 5 && x <= 85 && y >= 555 && y <= 635) {
+            // Charge button
+            if (game.charge && game.charge.state === 'IDLE' && game.charge.cd <= 0) {
+                game.charge.state = 'CHARGING';
+                game.charge.time = 0;
+                chargeTouch = e.changedTouches[i].identifier;
+                sound('charge');
+            } else if (game.charge && game.charge.state === 'LAUNCHED') {
+                game.charge.state = 'DETONATING';
+                chargeTouch = false;
+            }
+        } else {
+            touchX = x;
+        }
+    }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = 400 / rect.width;
+    const scaleY = 700 / rect.height;
+
+    for (let i = 0; i < e.touches.length; i++) {
+        const x = (e.touches[i].clientX - rect.left) * scaleX;
+        const y = (e.touches[i].clientY - rect.top) * scaleY;
+        if (!(x >= 5 && x <= 85 && y >= 555 && y <= 635)) {
+            touchX = x;
+        }
+    }
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+    e.preventDefault();
+    let moveTouchLost = true;
+    let chargeTouchLost = false;
+
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === chargeTouch) {
+            chargeTouchLost = true;
+        }
+    }
+
+    // Check if any remaining touches are movement touches
+    for (let i = 0; i < e.touches.length; i++) {
         const rect = canvas.getBoundingClientRect();
-        touchX = touch.clientX - rect.left;
-        isTouching = true;
-
-        showTouchIndicator(touch.clientX, touch.clientY);
+        const scaleX = 400 / rect.width;
+        const scaleY = 700 / rect.height;
+        const x = (e.touches[i].clientX - rect.left) * scaleX;
+        const y = (e.touches[i].clientY - rect.top) * scaleY;
+        if (!(x >= 5 && x <= 85 && y >= 555 && y <= 635)) {
+            moveTouchLost = false;
+        }
     }
 
-    function handleTouchMove(e) {
-        e.preventDefault();
-        if (!isTouching) return;
-        const touch = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        touchX = touch.clientX - rect.left;
+    if (moveTouchLost) touchX = null;
+    if (chargeTouchLost && game.charge && game.charge.state === 'CHARGING') {
+        releaseCharge();
+        chargeTouch = false;
+    }
+}, { passive: false });
+
+function releaseCharge() {
+    if (!game || !game.charge) return;
+    game.charge.state = 'LAUNCHED';
+    game.charge.x = game.player.x;
+    game.charge.y = game.player.y - 20;
+}
+
+// ── GAME LOOP ──────────────────────────────────────────────────────────────
+function gameLoop(timestamp) {
+    if (gameState !== 'PLAYING') { animationId = null; return; }
+
+    const rawDt = Math.min((timestamp - lastTime) / 1000, 0.05);
+    lastTime = timestamp;
+    const dt = rawDt;
+
+    game.t += dt;
+
+    // Controls hint
+    if (game.showCtrl) {
+        game.ctrlT += dt;
+        if (game.ctrlT > 5) game.showCtrl = false;
     }
 
-    function handleTouchEnd(e) {
-        e.preventDefault();
-        isTouching = false;
+    // Screen shake decay
+    if (game.shake > 0) {
+        game.shake *= 0.85;
+        game.shakeX = (Math.random() - 0.5) * game.shake;
+        game.shakeY = (Math.random() - 0.5) * game.shake;
+        if (game.shake < 0.2) game.shake = 0;
+    } else {
+        game.shakeX = 0; game.shakeY = 0;
     }
 
-    function showTouchIndicator(x, y) {
-        const indicator = document.createElement('div');
-        indicator.className = 'touch-indicator';
-        indicator.style.left = (x - 20) + 'px';
-        indicator.style.top = (y - 20) + 'px';
-        document.body.appendChild(indicator);
-        setTimeout(() => indicator.remove(), 600);
+    // Flash decay
+    if (game.flash > 0) game.flash -= dt * 3;
+
+    // Combo decay
+    if (game.comboT > 0) game.comboT -= dt;
+    else game.combo = 0;
+
+    // ── PLAYER ──────────────────────────────────────────────────────
+    const ch = game.charge;
+
+    if (game.player.respawn > 0) {
+        game.player.respawn -= dt;
+    } else {
+        // Movement
+        if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+            game.player.vx = Math.max(game.player.vx - 1.5, -6);
+        } else if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+            game.player.vx = Math.min(game.player.vx + 1.5, 6);
+        } else if (touchX !== null) {
+            const diff = touchX - game.player.x;
+            const targetVx = Math.sign(diff) * Math.min(Math.abs(diff) * 0.22, 6);
+            game.player.vx += (targetVx - game.player.vx) * 0.35;
+        } else {
+            game.player.vx *= 0.75;
+        }
+
+        game.player.x += game.player.vx;
+        game.player.x = Math.max(15, Math.min(385, game.player.x));
+
+        // Iframes
+        if (game.player.iframes > 0) game.player.iframes -= dt;
+
+        // Player trail
+        game.player.trail.push({ x: game.player.x, y: game.player.y, t: 0.25 });
+        if (game.player.trail.length > 8) game.player.trail.shift();
+        game.player.trail.forEach(t => t.t -= dt);
+
+        // Charge input (keyboard)
+        if (keys[' ']) {
+            if (ch.state === 'IDLE' && ch.cd <= 0) {
+                ch.state = 'CHARGING';
+                ch.time = 0;
+                keys[' '] = false;
+                sound('charge');
+            } else if (ch.state === 'LAUNCHED') {
+                ch.state = 'DETONATING';
+                keys[' '] = false;
+            }
+        }
+
+        // Auto-shoot
+        game.shootT += dt;
+        const shootRate = 0.28;
+        if (game.shootT >= shootRate) {
+            game.shootT = 0;
+            game.pBullets.push({ x: game.player.x, y: game.player.y - 18, vy: -10 });
+            sound('shoot');
+        }
     }
 
-    // Bomb button control
-    bombButton.addEventListener('click', handleBombButton);
-    bombButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        handleBombButton();
+    // Cooldown
+    if (ch.cd > 0) ch.cd -= dt;
+
+    // ── CHARGE STATES ────────────────────────────────────────────────
+    if (ch.state === 'CHARGING') {
+        ch.time = Math.min(ch.time + dt, 2.5);
+    } else if (ch.state === 'LAUNCHED') {
+        ch.y -= 280 * dt;
+        if (ch.y < -30) ch.state = 'DETONATING';
+    } else if (ch.state === 'DETONATING') {
+        const t = ch.time;
+        const baseW = 130;
+        const chargeBonus = (t / 2.5) * 300;
+        const w = baseW + chargeBonus;
+        const h = (baseW + chargeBonus) * 0.65;
+
+        ch.zones.push({ x: ch.x, y: ch.y, w, h, t: 4.5 });
+        sound('detonate');
+        game.shake = 8 + (t / 2.5) * 6;
+        game.flash = 0.5 + (t / 2.5) * 0.5;
+
+        // Destroy bricks in zone
+        for (let i = game.bricks.length - 1; i >= 0; i--) {
+            const br = game.bricks[i];
+            if (Math.abs(br.x - ch.x) < w/2 && Math.abs(br.y - ch.y) < h/2) {
+                game.bricks.splice(i, 1);
+                spawnParticles(br.x, br.y, 5, '#ff8800', 4, 0.5);
+                game.score += 5;
+            }
+        }
+        // Destroy enemy bullets
+        for (let i = game.eBullets.length - 1; i >= 0; i--) {
+            const eb = game.eBullets[i];
+            if (Math.abs(eb.x - ch.x) < w/2 && Math.abs(eb.y - ch.y) < h/2) {
+                game.eBullets.splice(i, 1);
+                game.score += 1;
+            }
+        }
+        // Destroy bombs
+        for (let i = game.oBombs.length - 1; i >= 0; i--) {
+            const ob = game.oBombs[i];
+            if (Math.abs(ob.x - ch.x) < w/2 && Math.abs(ob.y - ch.y) < h/2) {
+                game.oBombs.splice(i, 1);
+                spawnParticles(ob.x, ob.y, 8, '#ff00ff', 5, 0.5);
+                game.score += 3;
+            }
+        }
+        // Damage bombers in zone
+        for (let i = game.bombers.length - 1; i >= 0; i--) {
+            const bm = game.bombers[i];
+            if (Math.abs(bm.x - ch.x) < w/2 && Math.abs(bm.y - ch.y) < h/2) {
+                game.bombers.splice(i, 1);
+                spawnParticles(bm.x, bm.y, 12, '#ffaa00', 5, 0.6);
+                game.score += 50;
+            }
+        }
+        // Damage Octo if in range
+        if (Math.abs(game.octo.x - ch.x) < w/2 + 40 && Math.abs(game.octo.y - ch.y) < h/2 + 25) {
+            const dmg = 5 + Math.floor((t / 2.5) * 10);
+            game.octo.health = Math.max(0, game.octo.health - dmg);
+            game.octo.armour = 0.4;
+            spawnParticles(game.octo.x, game.octo.y, 15, '#ff00ff', 6, 0.6);
+            sound('octoHit');
+        }
+
+        // Particles burst
+        spawnParticles(ch.x, ch.y, 30, '#ffffff', 8, 0.6);
+        spawnParticles(ch.x, ch.y, 20, '#ffff00', 5, 0.8);
+
+        ch.state = 'IDLE';
+        ch.cd = ch.maxCd;
+    }
+
+    // Zone decay
+    ch.zones = ch.zones.filter(z => { z.t -= dt; return z.t > 0; });
+
+    // ── OCTO ─────────────────────────────────────────────────────────
+    if (game.octo.armour > 0) game.octo.armour -= dt;
+
+    if (game.octo.health <= 49 && game.octo.phase === 1) {
+        game.octo.phase = 2;
+        sound('phase');
+        game.shake = 10;
+        spawnParticles(game.octo.x, game.octo.y, 25, '#ff00ff', 7, 0.8);
+    }
+
+    if (game.octo.phase === 2) {
+        const spd = 1.5 + (1 - game.octo.health / 100) * 2;
+        game.octo.x += game.octo.dir * spd;
+        if (game.octo.x < 55 || game.octo.x > 345) game.octo.dir *= -1;
+        game.octo.bombT += dt;
+        const bombInterval = Math.max(2.5, 5.0 - (100 - game.octo.health) * 0.03);
+        if (game.octo.bombT > bombInterval) {
+            game.octo.bombT = 0;
+            // Spread bomb pattern
+            const count = game.octo.health < 30 ? 3 : 1;
+            for (let i = 0; i < count; i++) {
+                const spread = (i - (count-1)/2) * 30;
+                game.oBombs.push({
+                    x: game.octo.x + spread, y: game.octo.y + 35,
+                    vy: 1.2 + Math.random() * 0.5,
+                    s: 14,
+                    vx: spread * 0.02
+                });
+            }
+        }
+    }
+
+    // ── BRICKS ───────────────────────────────────────────────────────
+    const spawnRate = game.octo.phase === 1 ? 1.4 : 1.0;
+    game.brickT += dt;
+    if (game.brickT > spawnRate && game.bricks.length < 55) {
+        game.brickT = 0;
+        const cols = 11;
+        const bw = 300 / cols;
+        for (let attempt = 0; attempt < 8; attempt++) {
+            const c = Math.floor(Math.random() * cols);
+            const r = Math.floor(Math.random() * 4);
+            const x = 50 + c * bw + bw/2;
+            const y = 120 + r * 28;
+            let blocked = ch.zones.some(z => Math.abs(x-z.x)<z.w/2 && Math.abs(y-z.y)<z.h/2);
+            const exists = game.bricks.some(b => Math.abs(b.x-x)<5 && Math.abs(b.y-y)<5);
+            if (!exists && !blocked) {
+                game.bricks.push({ x, y, w: bw-5, h: 20, st: Math.random() * 2 });
+                break;
+            }
+        }
+    }
+
+    // Bricks shoot
+    game.bricks.forEach(b => {
+        b.st += dt;
+        if (b.st > 2.5) {
+            b.st = 0;
+            game.eBullets.push({ x: b.x, y: b.y + 12, vy: 2.2, t: 'brick' });
+        }
     });
 
-    function handleBombButton() {
-        if (bombState === 'idle') {
-            bombState = 'charging';
-            bombChargeStart = Date.now();
-            bombButton.classList.add('charging');
-            bombLabel.innerHTML = 'CHARGING<br>...';
-            playSound(200, 0.8);
-        } else if (bombState === 'charging') {
-            const chargeTime = Date.now() - bombChargeStart;
-            if (chargeTime > 200) {
-                fireExplosive(chargeTime);
-                bombState = 'active';
-                bombButton.classList.remove('charging');
-                bombButton.classList.add('active');
-                bombLabel.innerHTML = 'DETONATE<br>NOW!';
-            }
-        } else if (bombState === 'active') {
-            detonateExplosive();
-            bombState = 'idle';
-            bombButton.classList.remove('active');
-            bombLabel.innerHTML = 'CHARGE<br>BOMB';
-            chargeBar.style.width = '0%';
-        }
-    }
-
-    function shootBullet() {
-        bullets.push({
-            x: player.x + player.width / 2 - 2 * scale,
-            y: player.y,
-            width: 5 * scale,
-            height: 12 * scale,
-            speed: 10 * scale
-        });
-        playSound(800, 0.1);
-    }
-
-    function fireExplosive(chargeTime) {
-        const maxChargeTime = 1200;
-        const chargeRatio = Math.min(chargeTime / maxChargeTime, 1);
-        const size = (10 + chargeRatio * 20) * scale;
-
-        explosiveInFlight = {
-            x: player.x + player.width / 2 - size / 2,
-            y: player.y,
-            width: size,
-            height: size,
-            speed: 7 * scale,
-            charge: chargeRatio,
-            pulsate: 0
-        };
-
-        explosives.push(explosiveInFlight);
-        playSound(400, 0.3, 'triangle');
-    }
-
-    function detonateExplosive() {
-        explosives.forEach((explosive) => {
-            const radius = (70 + explosive.charge * 90) * scale;
-            const centerX = explosive.x + explosive.width/2;
-            const centerY = explosive.y + explosive.height/2;
-
-            createBigExplosion(centerX, centerY, radius);
-            playSound(100, 0.8, 'sawtooth', 0.3);
-
-            blastZones.push({
-                x: centerX - radius,
-                y: centerY - radius,
-                width: radius * 2,
-                height: radius * 2,
-                duration: 5000,
-                startTime: Date.now()
-            });
-
-            const points = Math.floor(10 + explosive.charge * 20);
-
-            brickEnemies = brickEnemies.filter(brick => {
-                const distance = Math.sqrt(
-                    Math.pow(brick.x + brick.width/2 - centerX, 2) +
-                    Math.pow(brick.y + brick.height/2 - centerY, 2)
-                );
-                if (distance <= radius) {
-                    createExplosion(brick.x, brick.y, '#f44');
-                    score += points;
-                    return false;
-                }
-                return true;
-            });
-
-            bomberEnemies = bomberEnemies.filter(bomber => {
-                const distance = Math.sqrt(
-                    Math.pow(bomber.x + bomber.width/2 - centerX, 2) +
-                    Math.pow(bomber.y + bomber.height/2 - centerY, 2)
-                );
-                if (distance <= radius) {
-                    createBigExplosion(bomber.x + bomber.width/2, bomber.y + bomber.height/2, 40 * scale);
-                    score += points * 3;
-                    return false;
-                }
-                return true;
-            });
-
-            if (checkCollision({
-                x: centerX - radius/2,
-                y: centerY - radius/2,
-                width: radius,
-                height: radius
-            }, mothership)) {
-                const damage = Math.floor(15 + explosive.charge * 25);
-                mothershipHealth -= damage;
-                score += damage * 3;
-                createBigExplosion(mothership.x + mothership.width/2, mothership.y + mothership.height/2, 35 * scale);
-
-                if (mothershipHealth <= 0) {
-                    victory();
-                }
-            }
-
-            updateUI();
-        });
-        explosives = [];
-        explosiveInFlight = null;
-    }
-
-    function spawnBrickEnemy() {
-        const brickWidth = 30 * scale;
-        const brickHeight = 18 * scale;
-        const rows = 4;
-        const cols = Math.floor(canvas.width / brickWidth);
-
-        for (let row = 0; row < rows; row++) {
-            for (let col = 0; col < cols; col++) {
-                const x = col * brickWidth;
-                const y = (90 * scale) + (row * brickHeight);
-
-                const existingBrick = brickEnemies.find(brick =>
-                    Math.abs(brick.x - x) < brickWidth && Math.abs(brick.y - y) < brickHeight
-                );
-
-                const inBlastZone = blastZones.some(zone =>
-                    x + brickWidth > zone.x && x < zone.x + zone.width &&
-                    y + brickHeight > zone.y && y < zone.y + zone.height
-                );
-
-                if (!existingBrick && !inBlastZone && Math.random() > 0.7) {
-                    brickEnemies.push({
-                        x: x,
-                        y: y,
-                        width: brickWidth,
-                        height: brickHeight,
-                        color: '#f44',
-                        lastBombDrop: Date.now() + Math.random() * 3000
-                    });
-                }
-            }
-        }
-    }
-
-    function spawnBomberEnemy() {
-        const fromLeft = Math.random() > 0.5;
-        const startX = fromLeft ? -70 * scale : canvas.width + 15 * scale;
-        const direction = fromLeft ? 1 : -1;
-
-        bomberEnemies.push({
-            x: startX,
-            y: (280 + Math.random() * 120) * scale,
-            baseY: (280 + Math.random() * 120) * scale,
-            width: 70 * scale,
-            height: 35 * scale,
-            speed: (2.5 + Math.random()) * scale,
-            direction: direction,
-            waveOffset: Math.random() * Math.PI * 2,
-            lastBombDrop: Date.now()
+    // ── BOMBERS ──────────────────────────────────────────────────────
+    const bomberRate = game.octo.phase === 1 ? 14 : 9;
+    game.bomberT += dt;
+    if (game.bomberT > bomberRate) {
+        game.bomberT = 0;
+        const left = Math.random() < 0.5;
+        game.bombers.push({
+            x: left ? -50 : 450,
+            y: 280 + (Math.random()-0.5) * 60,
+            vx: left ? 3 : -3,
+            p: Math.random() * 6.28,
+            bt: 0.5 + Math.random(),
         });
     }
 
-    function createExplosion(x, y, color = '#ff0') {
-        for (let i = 0; i < 8; i++) {
-            particles.push({
-                x: x,
-                y: y,
-                vx: (Math.random() - 0.5) * 8 * scale,
-                vy: (Math.random() - 0.5) * 8 * scale,
-                life: 30,
-                color: color,
-                size: 3 * scale
-            });
+    game.bombers.forEach(b => {
+        b.x += b.vx;
+        b.p += 0.05;
+        b.y += Math.sin(b.p) * 0.8;
+        b.bt += dt;
+        if (b.bt > 1.8 && b.x > 20 && b.x < 380) {
+            b.bt = 0;
+            game.eBullets.push({ x: b.x, y: b.y + 15, vy: 3.5, t: 'bomber', vx: (Math.random()-.5)*0.5 });
         }
-    }
+    });
+    game.bombers = game.bombers.filter(b => b.x > -80 && b.x < 480);
 
-    function createBigExplosion(x, y, radius) {
-        const count = Math.floor(radius / (5 * scale));
-        for (let i = 0; i < count; i++) {
-            particles.push({
-                x: x,
-                y: y,
-                vx: (Math.random() - 0.5) * 12 * scale,
-                vy: (Math.random() - 0.5) * 12 * scale,
-                life: 50,
-                color: ['#ff0', '#f80', '#f44'][i % 3],
-                size: (3 + Math.random() * 3) * scale
-            });
+    // ── BULLETS ──────────────────────────────────────────────────────
+    game.pBullets.forEach(b => b.y += b.vy);
+    game.eBullets.forEach(b => { b.y += b.vy; if(b.vx) b.x += b.vx; });
+    game.oBombs.forEach(b => { b.y += b.vy; if(b.vx) b.x += b.vx; });
+    game.pBullets = game.pBullets.filter(b => b.y > -15);
+    game.eBullets = game.eBullets.filter(b => b.y < 715 && b.x > -20 && b.x < 420);
+    game.oBombs = game.oBombs.filter(b => b.y < 715);
+
+    // ── COLLISIONS: player bullets ────────────────────────────────
+    game.pBullets = game.pBullets.filter(b => {
+        // vs Octo
+        if (Math.abs(b.x - game.octo.x) < 43 && Math.abs(b.y - game.octo.y) < 25) {
+            game.octo.health = Math.max(0, game.octo.health - 1);
+            game.score += 5;
+            game.octo.armour = 0.1;
+            sound('octoHit');
+            spawnParticles(b.x, b.y, 4, '#ff00ff', 3, 0.3);
+            if (game.octo.health <= 0) { showVictory(); return false; }
+            return false;
         }
-    }
-
-    function checkCollision(rect1, rect2) {
-        return rect1.x < rect2.x + rect2.width &&
-            rect1.x + rect1.width > rect2.x &&
-            rect1.y < rect2.y + rect2.height &&
-            rect1.y + rect1.height > rect2.y;
-    }
-
-    function update() {
-        if (!gameRunning) return;
-
-        // Touch/swipe movement with auto-fire
-        if (isTouching) {
-            player.targetX = touchX - player.width / 2;
-
-            // Auto-fire while touching
-            const now = Date.now();
-            if (now - lastBulletTime > autoFireRate) {
-                shootBullet();
-                lastBulletTime = now;
-            }
-        }
-
-        // Desktop fallback
-        if (keys['ArrowLeft'] || keys['KeyA']) {
-            player.targetX -= player.speed;
-            const now = Date.now();
-            if (now - lastBulletTime > autoFireRate) {
-                shootBullet();
-                lastBulletTime = now;
-            }
-        }
-        if (keys['ArrowRight'] || keys['KeyD']) {
-            player.targetX += player.speed;
-            const now = Date.now();
-            if (now - lastBulletTime > autoFireRate) {
-                shootBullet();
-                lastBulletTime = now;
-            }
-        }
-
-        // Smooth player movement
-        player.targetX = Math.max(0, Math.min(canvas.width - player.width, player.targetX));
-        player.x += (player.targetX - player.x) * 0.2;
-
-        // Update charge bar
-        if (bombState === 'charging') {
-            const chargeTime = Date.now() - bombChargeStart;
-            const chargeRatio = Math.min(chargeTime / 1200, 1) * 100;
-            chargeBar.style.width = chargeRatio + '%';
-
-            if (chargeRatio >= 100) {
-                bombButton.classList.remove('charging');
-                bombButton.classList.add('ready');
-                bombLabel.innerHTML = 'LAUNCH<br>BOMB!';
-            }
-        }
-
-        blastZones = blastZones.filter(zone => Date.now() - zone.startTime < zone.duration);
-
-        bullets = bullets.filter(bullet => {
-            bullet.y -= bullet.speed;
-            return bullet.y > -bullet.height;
-        });
-
-        explosives = explosives.filter(explosive => {
-            explosive.y -= explosive.speed;
-            explosive.pulsate += 0.3;
-            return explosive.y > -explosive.height;
-        });
-
-        bombs = bombs.filter(bomb => {
-            bomb.y += bomb.speed;
-            if (bomb.explosive) bomb.pulsate += 0.3;
-
-            if (checkCollision(bomb, player)) {
-                if (bomb.explosive) {
-                    const explosionSize = bomb.isBossBomb ? 80 * scale : 60 * scale;
-                    createBigExplosion(bomb.x, bomb.y, explosionSize);
-                    playSound(100, 0.8, 'sawtooth', 0.3);
-                    lives -= bomb.isBossBomb ? 3 : 2;
-                } else {
-                    createExplosion(bomb.x, bomb.y, '#f44');
-                    lives--;
-                }
-                updateUI();
-                if (lives <= 0) gameOver();
+        // vs Bricks
+        for (let i = game.bricks.length - 1; i >= 0; i--) {
+            const br = game.bricks[i];
+            if (Math.abs(b.x - br.x) < br.w/2+2 && Math.abs(b.y - br.y) < br.h/2+2) {
+                spawnParticles(br.x, br.y, 6, '#ff8800', 3, 0.4);
+                game.bricks.splice(i, 1);
+                game.score += 10;
+                sound('hit');
                 return false;
             }
-
-            if (bomb.explosive && bomb.y >= canvas.height - 25 * scale) {
-                const explosionSize = bomb.isBossBomb ? 90 * scale : 70 * scale;
-                createBigExplosion(bomb.x, bomb.y, explosionSize);
-                playSound(150, 0.3);
+        }
+        // vs Bombers
+        for (let i = game.bombers.length - 1; i >= 0; i--) {
+            const bm = game.bombers[i];
+            if (Math.abs(b.x - bm.x) < 32 && Math.abs(b.y - bm.y) < 16) {
+                spawnParticles(bm.x, bm.y, 14, '#ffaa00', 5, 0.6);
+                game.bombers.splice(i, 1);
+                game.score += 50;
+                sound('hit');
                 return false;
             }
-
-            return bomb.y < canvas.height;
-        });
-
-        brickEnemies.forEach(brick => {
-            if (Date.now() - brick.lastBombDrop > 4000 + Math.random() * 6000) {
-                bombs.push({
-                    x: brick.x + brick.width / 2 - 3 * scale,
-                    y: brick.y + brick.height,
-                    width: 5 * scale,
-                    height: 10 * scale,
-                    speed: 2.5 * scale,
-                    explosive: false
-                });
-                brick.lastBombDrop = Date.now();
-            }
-        });
-
-        const healthPercentage = mothershipHealth / 500;
-        if (healthPercentage <= 0.49 && !mothership.isEnraged) {
-            mothership.isEnraged = true;
-            playSound(150, 1, 'sawtooth', 0.4);
         }
-
-        if (mothership.isEnraged) {
-            mothership.x += mothership.speed * mothership.direction;
-
-            if (mothership.x <= -50 * scale || mothership.x >= canvas.width - mothership.width + 50 * scale) {
-                mothership.direction *= -1;
-            }
-
-            if (Date.now() - mothership.lastBombDrop > mothership.bombDropInterval) {
-                bombs.push({
-                    x: mothership.x + mothership.width / 2 - 5 * scale,
-                    y: mothership.y + mothership.height,
-                    width: 10 * scale,
-                    height: 15 * scale,
-                    speed: 3 * scale,
-                    color: '#f0f',
-                    explosive: true,
-                    pulsate: 0,
-                    isBossBomb: true
-                });
-                mothership.lastBombDrop = Date.now();
-                playSound(300, 0.3, 'triangle', 0.2);
+        // vs Enemy bullets
+        for (let i = game.eBullets.length - 1; i >= 0; i--) {
+            const eb = game.eBullets[i];
+            if (Math.abs(b.x - eb.x) < 9 && Math.abs(b.y - eb.y) < 12) {
+                game.eBullets.splice(i, 1);
+                game.score += 2;
+                sound('hit');
+                return false;
             }
         }
-
-        bomberEnemies = bomberEnemies.filter(bomber => {
-            bomber.x += bomber.speed * bomber.direction;
-            bomber.waveOffset += 0.05;
-            bomber.y = bomber.baseY + Math.sin(bomber.waveOffset) * 25 * scale;
-
-            if (Date.now() - bomber.lastBombDrop > 1000) {
-                bombs.push({
-                    x: bomber.x + bomber.width / 2 - 6 * scale,
-                    y: bomber.y + bomber.height,
-                    width: 12 * scale,
-                    height: 18 * scale,
-                    speed: 3 * scale,
-                    color: '#f40',
-                    explosive: true,
-                    pulsate: 0,
-                    isBossBomb: false
-                });
-                bomber.lastBombDrop = Date.now();
+        // vs Octo bombs
+        for (let i = game.oBombs.length - 1; i >= 0; i--) {
+            const ob = game.oBombs[i];
+            if (Math.abs(b.x - ob.x) < ob.s+3 && Math.abs(b.y - ob.y) < ob.s+3) {
+                spawnParticles(ob.x, ob.y, 8, '#ff00ff', 4, 0.4);
+                game.oBombs.splice(i, 1);
+                game.score += 5;
+                sound('hit');
+                return false;
             }
+        }
+        return true;
+    });
 
-            return bomber.direction > 0 ? bomber.x < canvas.width + 90 * scale : bomber.x > -90 * scale;
-        });
-
-        bullets.forEach((bullet, bulletIndex) => {
-            if (checkCollision(bullet, mothership)) {
-                createExplosion(bullet.x, bullet.y, '#0f0');
-                playSound(300, 0.2);
-                bullets.splice(bulletIndex, 1);
-                mothershipHealth -= 3;
-                score += 25;
-                updateUI();
-                if (mothershipHealth <= 0) victory();
-                return;
-            }
-
-            brickEnemies.forEach((brick, brickIndex) => {
-                if (checkCollision(bullet, brick)) {
-                    createExplosion(brick.x, brick.y, '#f44');
-                    playSound(150, 0.2);
-                    bullets.splice(bulletIndex, 1);
-                    brickEnemies.splice(brickIndex, 1);
-                    score += 10;
-                    updateUI();
-                    return;
+    // ── COLLISIONS: enemy bullets → player ───────────────────────
+    if (game.player.respawn <= 0 && game.player.iframes <= 0) {
+        game.eBullets = game.eBullets.filter(b => {
+            if (Math.abs(b.x - game.player.x) < 14 && Math.abs(b.y - game.player.y) < 14) {
+                game.player.health = Math.max(0, game.player.health - 20);
+                game.player.iframes = 0.4;
+                sound('damage');
+                game.shake = 4;
+                spawnParticles(game.player.x, game.player.y, 8, '#00bfff', 4, 0.4);
+                if (game.player.health <= 0) {
+                    game.player.health = 100;
+                    game.player.lives--;
+                    game.player.respawn = 1.5;
+                    game.player.iframes = 1.5;
+                    game.shake = 7;
+                    if (game.player.lives <= 0) showGameOver();
                 }
-            });
-
-            bomberEnemies.forEach((bomber, bomberIndex) => {
-                if (checkCollision(bullet, bomber)) {
-                    createBigExplosion(bomber.x + bomber.width/2, bomber.y + bomber.height/2, 35 * scale);
-                    playSound(250, 0.4);
-                    bullets.splice(bulletIndex, 1);
-                    bomberEnemies.splice(bomberIndex, 1);
-                    score += 50;
-                    updateUI();
-                    return;
-                }
-            });
-
-            bombs.forEach((bomb, bombIndex) => {
-                if (checkCollision(bullet, bomb)) {
-                    createExplosion(bomb.x, bomb.y, '#ff0');
-                    playSound(400, 0.15);
-                    bullets.splice(bulletIndex, 1);
-                    bombs.splice(bombIndex, 1);
-                    score += 5;
-                    updateUI();
-                    return;
-                }
-            });
+                return false;
+            }
+            return true;
         });
 
-        particles = particles.filter(particle => {
-            particle.x += particle.vx;
-            particle.y += particle.vy;
-            particle.life--;
-            return particle.life > 0;
+        game.oBombs = game.oBombs.filter(b => {
+            if (Math.abs(b.x - game.player.x) < 14 + b.s && Math.abs(b.y - game.player.y) < 14 + b.s) {
+                game.player.health = Math.max(0, game.player.health - 30);
+                game.player.iframes = 0.5;
+                sound('damage');
+                game.shake = 6;
+                spawnParticles(game.player.x, game.player.y, 12, '#ff00ff', 5, 0.5);
+                if (game.player.health <= 0) {
+                    game.player.health = 100;
+                    game.player.lives--;
+                    game.player.respawn = 1.5;
+                    game.player.iframes = 1.5;
+                    game.shake = 8;
+                    if (game.player.lives <= 0) showGameOver();
+                }
+                return false;
+            }
+            return true;
         });
-
-        brickSpawnTimer++;
-        if (brickSpawnTimer > 120) {
-            spawnBrickEnemy();
-            brickSpawnTimer = 0;
-        }
-
-        bomberSpawnTimer++;
-        if (bomberSpawnTimer > 480) {
-            spawnBomberEnemy();
-            bomberSpawnTimer = 0;
-        }
     }
 
-    function render() {
-        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradient.addColorStop(0, '#001122');
-        gradient.addColorStop(1, '#003344');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // ── PARTICLES ─────────────────────────────────────────────────
+    game.particles = game.particles.filter(p => {
+        p.x += p.vx * dt * 60;
+        p.y += p.vy * dt * 60;
+        p.vx *= 0.95;
+        p.vy *= 0.95;
+        p.life -= dt;
+        return p.life > 0;
+    });
 
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-        for (let i = 0; i < 40; i++) {
-            const x = (i * 137.5 * scale) % canvas.width;
-            const y = (i * 67.3 * scale) % canvas.height;
-            ctx.fillRect(x, y, 2 * scale, 2 * scale);
-        }
+    render();
+    animationId = requestAnimationFrame(gameLoop);
+}
 
-        mothership.tentacleOffset += 0.08;
+// ── RENDER ─────────────────────────────────────────────────────────────────
+function render() {
+    ctx.save();
+    ctx.translate(game.shakeX, game.shakeY);
 
-        ctx.fillStyle = mothershipHealth > 200 ? '#a0a' : mothershipHealth > 100 ? '#c06' : '#f04';
-        ctx.fillRect(mothership.x + 90 * scale, mothership.y, 100 * scale, 60 * scale);
+    // BG
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, 400, 700);
 
-        ctx.fillStyle = mothershipHealth > 100 ? '#f00' : '#fff';
-        ctx.fillRect(mothership.x + 100 * scale, mothership.y + 18 * scale, 10 * scale, 10 * scale);
-        ctx.fillRect(mothership.x + 170 * scale, mothership.y + 18 * scale, 10 * scale, 10 * scale);
+    // Scrolling stars
+    game.bgStars.forEach(s => {
+        s.y = (s.y + s.spd) % 700;
+        const flicker = 0.5 + 0.5 * Math.sin(game.t * 3 + s.bright * 10);
+        ctx.fillStyle = `rgba(255,255,255,${(0.3 + s.bright * 0.7) * flicker})`;
+        ctx.fillRect(s.x, s.y, s.s, s.s);
+    });
 
-        const tentacleSpeed = mothership.isEnraged ? 0.4 : (mothershipHealth < 200 ? 0.3 : 0.15);
-        const tentacleColor = mothership.isEnraged ? '#c08' : (mothershipHealth > 200 ? '#808' : '#a06');
-        ctx.strokeStyle = tentacleColor;
-        ctx.lineWidth = (mothership.isEnraged ? 7 : 6) * scale;
-        for (let i = 0; i < 10; i++) {
-            const tentacleX = mothership.x + 15 * scale + (i * 26 * scale);
-            const waveIntensity = mothership.isEnraged ? 25 * scale : 15 * scale;
-            const waveY = Math.sin(mothership.tentacleOffset * tentacleSpeed + i * 0.6) * waveIntensity;
+    // Nebula wisps (subtle background color)
+    const nebulaGrad = ctx.createRadialGradient(200, 350, 0, 200, 350, 250);
+    nebulaGrad.addColorStop(0, `rgba(20,0,40,${0.3 + Math.sin(game.t * 0.3) * 0.1})`);
+    nebulaGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = nebulaGrad;
+    ctx.fillRect(0, 0, 400, 700);
 
+    // Flash
+    if (game.flash > 0) {
+        ctx.fillStyle = `rgba(255,255,200,${game.flash * 0.35})`;
+        ctx.fillRect(0, 0, 400, 700);
+    }
+
+    // Blast zones
+    game.charge.zones.forEach(z => {
+        const a = z.t / 4.5;
+        const grd = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, Math.max(z.w, z.h)/2);
+        grd.addColorStop(0, `rgba(255,255,100,${0.15 * a})`);
+        grd.addColorStop(1, `rgba(255,200,0,0)`);
+        ctx.fillStyle = grd;
+        ctx.fillRect(z.x - z.w/2, z.y - z.h/2, z.w, z.h);
+
+        ctx.strokeStyle = `rgba(255,255,80,${0.6 * a})`;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 4]);
+        ctx.strokeRect(z.x - z.w/2, z.y - z.h/2, z.w, z.h);
+        ctx.setLineDash([]);
+    });
+
+    // ── OCTO ─────────────────────────────────────────────────────────
+    const oc = game.octo;
+    const hitFlash = oc.armour > 0 && Math.floor(game.t * 20) % 2 === 0;
+    const ocCol = hitFlash ? '#ffffff' : (game.octo.phase === 2 ? '#ff44ff' : '#cc00cc');
+    const ocGlow = hitFlash ? '#ffffff' : '#ff00ff';
+
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = ocGlow;
+
+    // Tentacles
+    const ts = 80 / 8;
+    for (let i = 0; i < 8; i++) {
+        const wave = Math.sin(game.t * 3 + i * 0.8) * 14;
+        const tx = oc.x - 40 + (i + 0.5) * ts;
+        const tentH = Math.abs(wave) + 12;
+        const tentGrad = ctx.createLinearGradient(tx, oc.y + 15, tx, oc.y + 15 + tentH);
+        tentGrad.addColorStop(0, ocCol);
+        tentGrad.addColorStop(1, 'rgba(200,0,200,0)');
+        ctx.fillStyle = tentGrad;
+        ctx.fillRect(tx - 4, oc.y + 14, 8, tentH);
+    }
+
+    // Body
+    ctx.fillStyle = ocCol;
+    ctx.beginPath();
+    ctx.roundRect(oc.x - 42, oc.y - 18, 84, 33, 10);
+    ctx.fill();
+
+    // Eyes
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = '#ffffff';
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(oc.x - 28, oc.y - 12, 20, 10);
+    ctx.fillRect(oc.x + 8, oc.y - 12, 20, 10);
+    ctx.fillStyle = '#f00';
+    ctx.fillRect(oc.x - 23, oc.y - 10, 10, 6);
+    ctx.fillRect(oc.x + 13, oc.y - 10, 10, 6);
+
+    // Phase 2: extra pupils
+    if (oc.phase === 2) {
+        ctx.fillStyle = '#ff0';
+        ctx.fillRect(oc.x - 20, oc.y - 9, 4, 4);
+        ctx.fillRect(oc.x + 16, oc.y - 9, 4, 4);
+    }
+
+    ctx.shadowBlur = 0;
+
+    // ── BRICKS ───────────────────────────────────────────────────────
+    game.bricks.forEach(b => {
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = '#ff6600';
+        const hp = Math.max(0, 1 - b.st / 2.5);
+        ctx.fillStyle = `hsl(${20 + hp * 20}, 100%, ${35 + hp * 20}%)`;
+        ctx.fillRect(b.x - b.w/2, b.y - b.h/2, b.w, b.h);
+        // highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.fillRect(b.x - b.w/2 + 1, b.y - b.h/2 + 1, b.w - 2, 3);
+        ctx.shadowBlur = 0;
+
+        // Shoot timer bar
+        const barW = (b.st / 2.5) * (b.w - 4);
+        ctx.fillStyle = `rgba(255,${255 - Math.floor(hp*200)},0,0.6)`;
+        ctx.fillRect(b.x - b.w/2 + 2, b.y + b.h/2 - 4, barW, 3);
+    });
+
+    // ── BOMBERS ──────────────────────────────────────────────────────
+    game.bombers.forEach(b => {
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#b8860b';
+        ctx.fillStyle = '#c89b1a';
+        ctx.beginPath();
+        ctx.moveTo(b.x, b.y - 14);
+        ctx.lineTo(b.x - 32, b.y + 10);
+        ctx.lineTo(b.x + 32, b.y + 10);
+        ctx.closePath();
+        ctx.fill();
+        // cockpit
+        ctx.fillStyle = '#654321';
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y - 2, 10, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#4499ff';
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y - 2, 6, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    });
+
+    // ── PLAYER ───────────────────────────────────────────────────────
+    const pl = game.player;
+    const visible = pl.respawn <= 0 || Math.floor(game.t * 12) % 2;
+
+    // Trail
+    pl.trail.forEach((tr, idx) => {
+        if (tr.t > 0 && visible) {
+            const a = (tr.t / 0.25) * 0.2 * (idx / pl.trail.length);
+            ctx.fillStyle = `rgba(0,191,255,${a})`;
             ctx.beginPath();
-            ctx.moveTo(tentacleX, mothership.y + 60 * scale);
-            ctx.quadraticCurveTo(
-                tentacleX + 10 * scale, mothership.y + 85 * scale + waveY,
-                tentacleX + 18 * scale, mothership.y + 110 * scale + waveY * 1.5
-            );
-            ctx.stroke();
+            ctx.arc(tr.x, tr.y, 8 * (idx / pl.trail.length), 0, Math.PI * 2);
+            ctx.fill();
         }
+    });
 
-        const barWidth = 220 * scale;
-        const barX = canvas.width / 2 - barWidth / 2;
-        const barY = 80 * scale;
+    if (visible) {
+        ctx.shadowBlur = game.charge.state === 'CHARGING' ? 20 + game.charge.time * 8 : 12;
+        ctx.shadowColor = game.charge.state === 'CHARGING' ? '#ffff00' : '#00bfff';
 
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fillRect(barX, barY, barWidth, 8 * scale);
+        // Ship body
+        ctx.fillStyle = game.charge.state === 'CHARGING' ? '#ffee44' : '#00bfff';
+        ctx.beginPath();
+        ctx.moveTo(pl.x, pl.y - 18);
+        ctx.lineTo(pl.x - 16, pl.y + 8);
+        ctx.lineTo(pl.x - 6, pl.y + 4);
+        ctx.lineTo(pl.x, pl.y + 8);
+        ctx.lineTo(pl.x + 6, pl.y + 4);
+        ctx.lineTo(pl.x + 16, pl.y + 8);
+        ctx.closePath();
+        ctx.fill();
 
-        const healthRatio = Math.max(0, mothershipHealth / 500);
-        ctx.fillStyle = healthRatio > 0.6 ? '#0f0' : healthRatio > 0.3 ? '#ff0' : '#f00';
-        ctx.fillRect(barX, barY, barWidth * healthRatio, 8 * scale);
+        // Cockpit
+        ctx.fillStyle = '#aaeeff';
+        ctx.beginPath();
+        ctx.ellipse(pl.x, pl.y - 5, 5, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
 
-        blastZones.forEach(zone => {
-            const age = Date.now() - zone.startTime;
-            const lifeRatio = 1 - (age / zone.duration);
+        // Engine glow
+        ctx.fillStyle = `rgba(0,255,200,${0.6 + Math.sin(game.t * 20) * 0.2})`;
+        ctx.beginPath();
+        ctx.arc(pl.x, pl.y + 10, 4, 0, Math.PI * 2);
+        ctx.fill();
 
-            ctx.fillStyle = `rgba(255, 100, 100, ${0.15 * lifeRatio})`;
-            ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
+        ctx.shadowBlur = 0;
+    }
 
-            ctx.strokeStyle = `rgba(255, 150, 150, ${0.4 * lifeRatio})`;
-            ctx.lineWidth = 3 * scale;
-            ctx.strokeRect(zone.x, zone.y, zone.width, zone.height);
-        });
+    // ── BULLETS ──────────────────────────────────────────────────────
+    ctx.shadowBlur = 8;
 
-        brickEnemies.forEach(brick => {
-            ctx.fillStyle = brick.color;
-            ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
+    game.pBullets.forEach(b => {
+        ctx.fillStyle = '#ffff44';
+        ctx.shadowColor = '#ffff00';
+        const grad = ctx.createLinearGradient(b.x, b.y, b.x, b.y + 12);
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(1, '#ffff00');
+        ctx.fillStyle = grad;
+        ctx.fillRect(b.x - 2, b.y - 8, 4, 13);
+    });
 
-            ctx.strokeStyle = '#800';
-            ctx.lineWidth = 1.5 * scale;
-            ctx.strokeRect(brick.x, brick.y, brick.width, brick.height);
-        });
+    game.eBullets.forEach(b => {
+        const col = b.t === 'brick' ? '#ff8800' : '#cc0044';
+        ctx.fillStyle = col;
+        ctx.shadowColor = col;
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y, 3, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+    });
 
+    game.oBombs.forEach(b => {
+        ctx.fillStyle = '#ff00ff';
+        ctx.shadowColor = '#ff00ff';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.s, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffaaff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        // inner
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.s * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    ctx.shadowBlur = 0;
+
+    // Charge projectile
+    if (game.charge.state === 'LAUNCHED') {
+        const sz = 12 + game.charge.time * 4;
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = '#ffff00';
+        const cGrad = ctx.createRadialGradient(game.charge.x, game.charge.y, 0, game.charge.x, game.charge.y, sz);
+        cGrad.addColorStop(0, '#ffffff');
+        cGrad.addColorStop(0.5, '#ffff44');
+        cGrad.addColorStop(1, 'rgba(255,200,0,0)');
+        ctx.fillStyle = cGrad;
+        ctx.beginPath();
+        ctx.arc(game.charge.x, game.charge.y, sz, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
+    // ── PARTICLES ─────────────────────────────────────────────────
+    game.particles.forEach(p => {
+        const a = p.life / p.max;
+        ctx.fillStyle = p.col + Math.floor(a * 255).toString(16).padStart(2, '0');
+        const sz = 2 + a * 2;
+        ctx.fillRect(p.x - sz/2, p.y - sz/2, sz, sz);
+    });
+
+    // ── UI ────────────────────────────────────────────────────────────
+    // Score
+    ctx.fillStyle = '#0ff';
+    ctx.font = '22px VT323';
+    ctx.fillText(`SCORE: ${game.score}`, 10, 335);
+
+    // Lives
+    for (let i = 0; i < 3; i++) {
+        const lx = 10 + i * 18;
+        ctx.fillStyle = i < game.player.lives ? '#ff4466' : '#333';
+        ctx.font = '18px VT323';
+        ctx.fillText('♥', lx, 358);
+    }
+
+    // Player health bar
+    ctx.fillStyle = '#222';
+    ctx.fillRect(10, 364, 120, 8);
+    const hCol = pl.health > 60 ? '#00ff66' : pl.health > 30 ? '#ffaa00' : '#ff2222';
+    ctx.fillStyle = hCol;
+    ctx.fillRect(10, 364, pl.health * 1.2, 8);
+    ctx.strokeStyle = '#0ff';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(10, 364, 120, 8);
+    ctx.fillStyle = '#0ff';
+    ctx.font = '14px Share Tech Mono, monospace';
+    ctx.fillText('HP', 136, 372);
+
+    // Octo health bar (top)
+    const octoBarW = 200;
+    const octoBarX = 100;
+    ctx.fillStyle = '#111';
+    ctx.fillRect(octoBarX, 8, octoBarW, 12);
+    const octoHPpct = game.octo.health / 100;
+    const octoCol = octoHPpct > 0.5 ? '#ff00ff' : '#ff4444';
+    ctx.fillStyle = octoCol;
+    ctx.fillRect(octoBarX, 8, octoBarW * octoHPpct, 12);
+    ctx.strokeStyle = '#f0f';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(octoBarX, 8, octoBarW, 12);
+    ctx.fillStyle = '#f0f';
+    ctx.font = '16px VT323';
+    ctx.textAlign = 'center';
+    ctx.fillText('OCTO', 200, 34);
+    ctx.textAlign = 'left';
+
+    // Phase 2 warning
+    if (game.octo.phase === 2) {
+        const warn = Math.sin(game.t * 6) > 0;
+        if (warn) {
+            ctx.fillStyle = '#ff4444';
+            ctx.font = '14px VT323';
+            ctx.textAlign = 'center';
+            ctx.fillText('⚠ ENRAGED ⚠', 200, 48);
+            ctx.textAlign = 'left';
+        }
+    }
+
+    // ── CHARGE BUTTON ─────────────────────────────────────────────
+    const bx = 8, by = 558, bw2 = 72, bh = 72;
+    const isCharging = game.charge.state === 'CHARGING';
+    const isLaunched = game.charge.state === 'LAUNCHED';
+    const onCd = game.charge.cd > 0;
+
+    // Button BG
+    if (isCharging) {
+        const pulse = 0.3 + 0.4 * (game.charge.time / 2.5);
+        ctx.fillStyle = `rgba(255,220,0,${pulse})`;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = '#ffff00';
+    } else if (isLaunched) {
+        ctx.fillStyle = 'rgba(200,160,0,0.5)';
+    } else if (onCd) {
+        ctx.fillStyle = 'rgba(30,30,60,0.6)';
+    } else {
+        ctx.fillStyle = 'rgba(0,60,100,0.5)';
+    }
+    ctx.fillRect(bx, by, bw2, bh);
+    ctx.shadowBlur = 0;
+
+    // Button border
+    ctx.strokeStyle = onCd ? '#334' : (isCharging ? '#ffff00' : '#0ff');
+    ctx.lineWidth = 2;
+    ctx.strokeRect(bx, by, bw2, bh);
+
+    // Button label
+    ctx.fillStyle = onCd ? '#556' : (isCharging ? '#ffff00' : '#ffffff');
+    ctx.font = '18px VT323';
+    ctx.textAlign = 'center';
+    ctx.fillText(isCharging ? 'HOLD!' : isLaunched ? '▶ DET' : onCd ? 'WAIT' : 'CHARGE', bx + bw2/2, by + 38);
+
+    // Charge meter inside button
+    if (isCharging) {
+        const prog = game.charge.time / 2.5;
+        ctx.fillStyle = `rgba(255,255,0,0.3)`;
+        ctx.fillRect(bx + 4, by + bh - 14, (bw2 - 8) * prog, 8);
+        ctx.strokeStyle = '#ffff00';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(bx + 4, by + bh - 14, bw2 - 8, 8);
+    }
+
+    // Cooldown overlay
+    if (onCd && !isLaunched) {
+        const cdProg = 1 - (game.charge.cd / game.charge.maxCd);
+        ctx.fillStyle = 'rgba(0,200,255,0.2)';
+        ctx.fillRect(bx, by + bh * (1 - cdProg), bw2, bh * cdProg);
         ctx.fillStyle = '#0ff';
-        ctx.fillRect(player.x, player.y, player.width, player.height);
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(player.x + 25 * scale, player.y + 18 * scale, 12 * scale, 5 * scale);
-
-        bullets.forEach(bullet => {
-            ctx.fillStyle = '#ff0';
-            ctx.shadowColor = '#ff0';
-            ctx.shadowBlur = 5 * scale;
-            ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
-            ctx.shadowBlur = 0;
-        });
-
-        explosives.forEach(explosive => {
-            const pulse = 0.7 + 0.3 * Math.sin(explosive.pulsate * 10);
-            ctx.fillStyle = `rgba(255, 0, 255, ${pulse})`;
-            ctx.shadowColor = '#f0f';
-            ctx.shadowBlur = 10 * scale;
-            ctx.fillRect(explosive.x, explosive.y, explosive.width, explosive.height);
-            ctx.shadowBlur = 0;
-
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 3 * scale;
-            ctx.strokeRect(explosive.x - 3 * scale, explosive.y - 3 * scale, explosive.width + 6 * scale, explosive.height + 6 * scale);
-        });
-
-        bombs.forEach(bomb => {
-            if (bomb.explosive) {
-                const pulseBrightness = 0.6 + 0.4 * Math.sin(bomb.pulsate * 6);
-
-                if (bomb.isBossBomb) {
-                    ctx.fillStyle = `rgba(255, 0, 255, ${pulseBrightness})`;
-                    ctx.shadowColor = '#f0f';
-                    ctx.shadowBlur = 15 * scale;
-                } else {
-                    ctx.fillStyle = `rgba(255, 68, 0, ${pulseBrightness})`;
-                    ctx.shadowColor = bomb.color;
-                    ctx.shadowBlur = 10 * scale;
-                }
-
-                ctx.fillRect(bomb.x, bomb.y, bomb.width, bomb.height);
-                ctx.shadowBlur = 0;
-
-                ctx.strokeStyle = bomb.isBossBomb ? '#fff' : '#ff0';
-                ctx.lineWidth = (bomb.isBossBomb ? 3 : 2) * scale;
-                ctx.strokeRect(bomb.x - 2 * scale, bomb.y - 2 * scale, bomb.width + 4 * scale, bomb.height + 4 * scale);
-            } else {
-                ctx.fillStyle = bomb.color || '#f80';
-                ctx.fillRect(bomb.x, bomb.y, bomb.width, bomb.height);
-            }
-        });
-
-        bomberEnemies.forEach(bomber => {
-            ctx.fillStyle = '#f84';
-            ctx.fillRect(bomber.x, bomber.y, bomber.width, bomber.height);
-
-            ctx.fillStyle = '#666';
-            ctx.fillRect(bomber.x - 7 * scale, bomber.y + 12 * scale, 12 * scale, 8 * scale);
-            ctx.fillRect(bomber.x + bomber.width - 5 * scale, bomber.y + 12 * scale, 12 * scale, 8 * scale);
-        });
-
-        particles.forEach(particle => {
-            ctx.fillStyle = particle.color;
-            ctx.globalAlpha = particle.life / 50;
-            ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
-            ctx.globalAlpha = 1;
-        });
+        ctx.font = '16px VT323';
+        ctx.fillText(game.charge.cd.toFixed(1) + 's', bx + bw2/2, by + bh - 8);
     }
 
-    function gameLoop() {
-        update();
-        render();
-        requestAnimationFrame(gameLoop);
+    ctx.textAlign = 'left';
+
+    // ── CONTROL HINT ─────────────────────────────────────────────
+    if (game.showCtrl) {
+        const fadeT = game.ctrlT < 4 ? 1 : 1 - (game.ctrlT - 4);
+        const a = Math.max(0, fadeT) * 0.9;
+        ctx.fillStyle = `rgba(0,255,255,${a})`;
+        ctx.font = '16px VT323';
+        ctx.textAlign = 'center';
+        ctx.fillText('TAP TO MOVE · HOLD CHARGE TO BLAST', 200, 530);
+        ctx.textAlign = 'left';
     }
 
-    function updateUI() {
-        document.getElementById('score').textContent = score;
-        document.getElementById('lives').textContent = lives;
-        document.getElementById('mothershipHealth').textContent = Math.max(0, mothershipHealth);
-    }
+    ctx.restore();
+}
 
-    function gameOver() {
-        gameRunning = false;
-        playSound(220, 1, 'triangle');
-        document.getElementById('finalScore').textContent = score;
-        document.getElementById('gameOver').style.display = 'block';
-    }
-
-    function victory() {
-        gameRunning = false;
-        playSound(523, 0.8, 'triangle');
-        document.getElementById('gameOver').innerHTML = `
-                <h2 style="color: #0f0;">VICTORY!</h2>
-                <p>The mothership is destroyed!</p>
-                <p>Final Score: ${score}</p>
-                <button class="restart-btn" onclick="restartGame()">Play Again</button>
-            `;
-        document.getElementById('gameOver').style.display = 'block';
-    }
-
-    function restartGame() {
-        gameRunning = true;
-        score = 0;
-        lives = 3;
-        mothershipHealth = 500;
-        mothership.x = mothership.baseX;
-        mothership.direction = 1;
-        mothership.isEnraged = false;
-        mothership.lastBombDrop = Date.now();
-        bullets = [];
-        explosives = [];
-        particles = [];
-        brickEnemies = [];
-        bomberEnemies = [];
-        bombs = [];
-        blastZones = [];
-        brickSpawnTimer = 0;
-        bomberSpawnTimer = 0;
-        isTouching = false;
-        bombState = 'idle';
-        explosiveInFlight = null;
-        bombButton.className = 'bomb-button';
-        bombLabel.innerHTML = 'CHARGE<br>BOMB';
-        chargeBar.style.width = '0%';
-        player.x = canvas.width / 2 - 30 * scale;
-        player.targetX = canvas.width / 2 - 30 * scale;
-        document.getElementById('gameOver').style.display = 'none';
-        updateUI();
-    }
-
-    updateUI();
-    gameLoop();
-
-    // Hide instructions after 5 seconds
-    setTimeout(() => {
-        document.getElementById('instructions').style.opacity = '0';
-        setTimeout(() => {
-            document.getElementById('instructions').style.display = 'none';
-        }, 500);
-    }, 5000);
+// Start rendering the menu background
+function menuLoop() {
+    if (gameState !== 'MENU' && gameState !== 'VICTORY' && gameState !== 'GAME_OVER') return;
+    requestAnimationFrame(menuLoop);
+}
 </script>
 </body>
 </html>
