@@ -422,6 +422,7 @@ function drawOcto(oc) {
 // ── RENDER ─────────────────────────────────────────────────────────────────
 function render() {
     ctx.save(); ctx.translate(game.shakeX,game.shakeY);
+    const pl=game.player;
     ctx.fillStyle='#000'; ctx.fillRect(0,0,400,700);
 
     // Stars
@@ -438,6 +439,79 @@ function render() {
         ctx.fillStyle=grd; ctx.fillRect(z.x-z.w/2,z.y-z.h/2,z.w,z.h);
         ctx.strokeStyle=`rgba(255,255,80,${0.6*a})`; ctx.lineWidth=2; ctx.setLineDash([8,4]); ctx.strokeRect(z.x-z.w/2,z.y-z.h/2,z.w,z.h); ctx.setLineDash([]);
     });
+
+    // ── BLAST PREVIEW (while charging) ──────────────────────────────────────
+    if(game.charge.state==='CHARGING'){
+        const prog=game.charge.time/2.5;
+        const baseW=130, bonus=(game.charge.time/2.5)*300;
+        const pw=baseW+bonus, ph=(baseW+bonus)*0.65;
+        // The bomb launches from player and travels up — preview centred on player x, upper half of screen
+        const px2=pl.x, py2=350; // approximate detonation midpoint (centre of field)
+        const pulse=0.55+Math.sin(game.t*12)*0.2;
+
+        // Count what's inside
+        let hits=0;
+        game.octos.forEach(oc=>{ if(Math.abs(oc.x-px2)<pw/2+40&&Math.abs(oc.y-py2)<ph/2+25) hits++; });
+        game.bricks.forEach(br=>{ if(Math.abs(br.x-px2)<pw/2&&Math.abs(br.y-py2)<ph/2) hits++; });
+        game.bombers.forEach(bm=>{ if(Math.abs(bm.x-px2)<pw/2&&Math.abs(bm.y-py2)<ph/2) hits++; });
+        game.eBullets.forEach(eb=>{ if(Math.abs(eb.x-px2)<pw/2&&Math.abs(eb.y-py2)<ph/2) hits++; });
+        game.oBombs.forEach(ob=>{ if(Math.abs(ob.x-px2)<pw/2&&Math.abs(ob.y-py2)<ph/2) hits++; });
+
+        // Colour shifts red→yellow based on hits (hotter = more targets)
+        const hitGlow=Math.min(hits/6,1);
+        const r=Math.round(255), g=Math.round(255*(1-hitGlow*0.6)), bv=Math.round(40*(1-hitGlow));
+
+        // Fill
+        const previewGrad=ctx.createRadialGradient(px2,py2,0,px2,py2,Math.max(pw,ph)/2);
+        previewGrad.addColorStop(0,`rgba(${r},${g},${bv},${0.07*pulse})`);
+        previewGrad.addColorStop(0.6,`rgba(${r},${g},${bv},${0.04*pulse})`);
+        previewGrad.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.fillStyle=previewGrad;
+        ctx.fillRect(px2-pw/2,py2-ph/2,pw,ph);
+
+        // Dashed border — animated dash offset
+        ctx.save();
+        ctx.strokeStyle=`rgba(${r},${g},${bv},${pulse*0.85})`;
+        ctx.lineWidth=1.5;
+        ctx.setLineDash([6,4]);
+        ctx.lineDashOffset=-game.t*18;
+        ctx.shadowBlur=8; ctx.shadowColor=`rgba(${r},${g},${bv},0.7)`;
+        ctx.strokeRect(px2-pw/2,py2-ph/2,pw,ph);
+        ctx.setLineDash([]); ctx.lineDashOffset=0;
+        ctx.restore();
+
+        // Corner tick marks
+        const tk=8;
+        ctx.strokeStyle=`rgba(${r},${g},${bv},${pulse})`;
+        ctx.lineWidth=2; ctx.shadowBlur=6; ctx.shadowColor=`rgba(${r},${g},${bv},1)`;
+        [[px2-pw/2,py2-ph/2,1,1],[px2+pw/2,py2-ph/2,-1,1],[px2-pw/2,py2+ph/2,1,-1],[px2+pw/2,py2+ph/2,-1,-1]].forEach(([cx2,cy2,dx2,dy2])=>{
+            ctx.beginPath(); ctx.moveTo(cx2,cy2); ctx.lineTo(cx2+dx2*tk,cy2); ctx.moveTo(cx2,cy2); ctx.lineTo(cx2,cy2+dy2*tk); ctx.stroke();
+        });
+        ctx.shadowBlur=0;
+
+        // Highlight targets inside zone
+        const inZone=(ex,ey,ew=0,eh=0)=>Math.abs(ex-px2)<pw/2+(ew||0)&&Math.abs(ey-py2)<ph/2+(eh||0);
+        game.octos.forEach(oc=>{ if(inZone(oc.x,oc.y,40,25)){ ctx.strokeStyle=`rgba(255,80,80,${pulse})`; ctx.lineWidth=2; ctx.setLineDash([4,3]); ctx.strokeRect(oc.x-44,oc.y-20,88,35); ctx.setLineDash([]); } });
+        game.bricks.forEach(br=>{ if(inZone(br.x,br.y)){ ctx.fillStyle=`rgba(255,255,80,${0.18*pulse})`; ctx.fillRect(br.x-br.w/2,br.y-br.h/2,br.w,br.h); } });
+        game.bombers.forEach(bm=>{ if(inZone(bm.x,bm.y)){ ctx.strokeStyle=`rgba(255,180,0,${pulse})`; ctx.lineWidth=2; ctx.setLineDash([4,3]); ctx.strokeRect(bm.x-34,bm.y-16,68,32); ctx.setLineDash([]); } });
+
+        // Hit counter label
+        if(hits>0){
+            const label=`${hits} TARGET${hits>1?'S':''}`;
+            ctx.font='bold 13px Share Tech Mono,monospace';
+            const lw=ctx.measureText(label).width;
+            const lx=Math.min(px2+pw/2-lw-6, 390), ly=py2-ph/2-6;
+            ctx.fillStyle=`rgba(0,0,0,${pulse*0.75})`; ctx.fillRect(lx-3,ly-13,lw+6,16);
+            ctx.fillStyle=`rgba(${r},${g},${bv},${pulse})`; ctx.fillText(label,lx,ly);
+        }
+
+        // Charge % label bottom-centre of zone
+        const pctLabel=`${Math.round(prog*100)}%`;
+        ctx.font='11px Share Tech Mono,monospace';
+        const pctLw=ctx.measureText(pctLabel).width;
+        ctx.fillStyle=`rgba(0,0,0,0.6)`; ctx.fillRect(px2-pctLw/2-3,py2+ph/2+3,pctLw+6,14);
+        ctx.fillStyle=`rgba(${r},${g},${bv},${pulse*0.9})`; ctx.fillText(pctLabel,px2-pctLw/2,py2+ph/2+14);
+    }
 
     // Octos
     game.octos.forEach(oc=>drawOcto(oc));
@@ -463,7 +537,6 @@ function render() {
     });
 
     // Player
-    const pl=game.player;
     const visible=pl.respawn<=0||Math.floor(game.t*12)%2;
     pl.trail.forEach((tr,idx)=>{ if(tr.t>0&&visible){ const a=(tr.t/0.25)*0.2*(idx/pl.trail.length); ctx.fillStyle=`rgba(0,191,255,${a})`; ctx.beginPath(); ctx.arc(tr.x,tr.y,8*(idx/pl.trail.length),0,Math.PI*2); ctx.fill(); } });
     if(visible){
