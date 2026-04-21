@@ -322,7 +322,7 @@ function gameLoop(timestamp) {
         var interval=0.45-prog*0.33;
         ch.pulseT=(ch.pulseT||0)+dt;
         if (ch.pulseT>=interval) { ch.pulseT=0; sound('charge_pulse',prog); }
-        // 2x fire rate
+        // 2x fire rate while charging
         game.shootT+=dt;
         if (game.shootT>=0.14) {
             game.shootT=0;
@@ -332,6 +332,11 @@ function gameLoop(timestamp) {
         // Continuous scatter every 0.35s
         ch.scatterT+=dt;
         if (ch.scatterT>=0.35) { ch.scatterT=0; fireScatter(); }
+        // Auto-release at full charge — restore normal fire rate
+        if (ch.time>=2.5) {
+            game.shootT=0;
+            releaseCharge();
+        }
     }
     else if (ch.state==='LAUNCHED') { ch.y-=280*dt; if(ch.y<-30) ch.state='DETONATING'; }
     else if (ch.state==='DETONATING') {
@@ -583,7 +588,8 @@ function render() {
         if(Math.sin(game.t*40)>0){ ctx.fillStyle='rgba(255,255,255,0.18)'; ctx.fillRect(bx+4,by+4,bw2-8,8); }
     }
     ctx.fillStyle=isC?'#ffff00':'#cceeff'; ctx.font='20px VT323'; ctx.textAlign='center';
-    ctx.fillText(isC?'HOLD!':isL?'DET!':'CHARGE', bx+bw2/2, by+42);
+    var chLabel = isC ? (ch.time>=2.5 ? 'AUTO!' : 'HOLD!') : (isL ? 'DET!' : 'CHARGE');
+    ctx.fillText(chLabel, bx+bw2/2, by+42);
     if(!isC&&!isL){ var p4=0.4+Math.sin(game.t*3)*0.15; ctx.fillStyle='rgba(0,200,255,'+p4*0.12+')'; ctx.beginPath(); ctx.arc(bx+bw2/2,by+bh/2-4,18,0,Math.PI*2); ctx.fill(); }
     ctx.textAlign='left';
 
